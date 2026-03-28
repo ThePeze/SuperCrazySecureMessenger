@@ -22,8 +22,8 @@ PORT = 6767
 MAX_FILE_SIZE = 5 * 1024 * 1024
 MAX_RETURN_MESSAGES = 100
 
-# Set this list manually.
-PRESET_USERS = ["Nikolai", "Jürgen", "Tanja", "Lilo", "Test"]
+# List of preset users always reachable
+PRESET_USERS = ["Test1", "Test2"]
 
 clients = {}  # username -> socket
 inboxes = {}  # username -> list[message]
