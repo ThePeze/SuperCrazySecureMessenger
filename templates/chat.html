@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="sidebar">
+        <div id="publicChat" class="user active">Public Chat</div>
+        <div id="users"></div>
+    </div>
+
+    <div class="chat">
+        <div id="chatHeader">Public Chat</div>
+        <div id="messages" class="messages"></div>
+        <div id="typingIndicator" class="typingIndicator"></div>
+
+        <form id="form">
+            <input id="fileInput" type="file">
+            <input id="input" placeholder="Type a message...">
+            <button>Send</button>
+        </form>
+
+        <button id="disconnectBtn" type="button" class="disconnectBtn">Disconnect</button>
+    </div>
+
+</div>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
