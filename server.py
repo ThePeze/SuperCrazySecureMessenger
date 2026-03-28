@@ -2,8 +2,9 @@ import socket
 import threading
 from cryptography.fernet import Fernet
 
-key = b'kM7Cvwx61jXktQeHFU6lDwwasinUguHBfyDKDu417v8='
-cipher = Fernet(key)
+from env_loader import get_fernet_key_bytes
+
+cipher = Fernet(get_fernet_key_bytes())
 
 MAX_FILE_SIZE = 5 * 1024 * 1024 #5 MB
 

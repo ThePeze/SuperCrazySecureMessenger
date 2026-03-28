@@ -5,14 +5,17 @@ import base64
 from cryptography.fernet import Fernet
 from urllib.parse import quote
 
-key = b'kM7Cvwx61jXktQeHFU6lDwwasinUguHBfyDKDu417v8='
-cipher = Fernet(key)
+from env_loader import get_flask_secret, get_fernet_key_bytes
+
+cipher = Fernet(get_fernet_key_bytes())
+
 
 def decrypt(data: bytes) -> bytes:
     return cipher.decrypt(data)
 
+
 app = Flask(__name__)
-app.secret_key = "kM7Cvwx61jXktQeHFU6lDwwasinUguHBfyDKDu417v8"
+app.secret_key = get_flask_secret()
 
 HOST = "127.0.0.1"
 PORT = 6767
