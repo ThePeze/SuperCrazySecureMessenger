@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 import socket
 import threading
+import time
 import base64
 from cryptography.fernet import Fernet
 from urllib.parse import quote
@@ -29,6 +30,36 @@ clients = {}  # username -> socket
 inboxes = {}  # username -> list[message]
 typing_state = {}  # target_username -> set[sender_username]
 next_message_id = 0
+last_activity = {}  # username -> monotonic time of last HTTP activity
+IDLE_DISCONNECT_SECONDS = 300  # 5 minutes without requests → disconnect socket
+
+API_PATHS = (
+    "/messages",
+    "/users",
+    "/send",
+    "/send_file",
+    "/typing",
+    "/typing_status",
+    "/disconnect",
+)
+
+
+@app.before_request
+def touch_activity_and_stale_session():
+    if request.endpoint == "static" or request.endpoint == "login":
+        return
+    u = session.get("username")
+    if not u:
+        return
+    if u not in clients:
+        session.pop("username", None)
+        if any(request.path.startswith(p) for p in API_PATHS):
+            return jsonify({"error": "disconnected"}), 401
+        if request.path == "/chat":
+            return redirect("/?error=" + quote("Session ended (disconnect or inactivity)."))
+        return
+    last_activity[u] = time.monotonic()
+
 
 def receive_line(sock):
     data = b""
@@ -61,8 +92,13 @@ def push_to_user(username, payload):
     next_message_id += 1
 
 def disconnect_username(username):
+    last_activity.pop(username, None)
     sock = clients.pop(username, None)
     if sock is not None:
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+        except Exception:
+            pass
         try:
             sock.close()
         except Exception:
@@ -74,9 +110,25 @@ def disconnect_username(username):
         if not typers:
             typing_state.pop(target, None)
 
+
+def _idle_watcher():
+    while True:
+        time.sleep(30)
+        now = time.monotonic()
+        for username in list(clients.keys()):
+            la = last_activity.get(username)
+            if la is None:
+                continue
+            if now - la > IDLE_DISCONNECT_SECONDS:
+                disconnect_username(username)
+
+
+threading.Thread(target=_idle_watcher, daemon=True).start()
+
+
 def connect_user(username):
-    # Preset users can "take over" an existing session.
-    if username in PRESET_USERS and username in clients:
+    # Always drop any stale Flask-side socket before a new login (disconnect or crashed tab).
+    if username in clients:
         disconnect_username(username)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -110,6 +162,7 @@ def connect_user(username):
 
     clients[username] = s
     ensure_inbox(username)
+    last_activity[username] = time.monotonic()
 
     def listen():
         while True:

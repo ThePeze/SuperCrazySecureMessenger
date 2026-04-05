@@ -246,20 +246,25 @@ while True:
         client_socket.close()
         continue
 
-    #check if username already exists
+    # Same username logging in again = take over (kick old TCP session).
     if username in usernames:
-        error_msg = encrypt(b"Connection refused: That username is already taken.")
-        client_socket.send(b"SERVER:" + error_msg + b"\n")
-        client_socket.close()
-        continue
+        idx = usernames.index(username)
+        old_sock = clients[idx]
+        clients[idx] = client_socket
+        try:
+            old_sock.shutdown(socket.SHUT_RDWR)
+        except Exception:
+            pass
+        try:
+            old_sock.close()
+        except Exception:
+            pass
+        print(f"{username} reconnected (session takeover) from {address}")
+    else:
+        usernames.append(username)
+        clients.append(client_socket)
+        print(f"{username} connected from {address}")
+        brodcast(f"{username} joined the chat.\n".encode(), client_socket)
 
-    usernames.append(username)
-    clients.append(client_socket)
-    print(f"{username} connected from {address}")
-
-    #join message
-    brodcast(f"{username} joined the chat.\n".encode(), client_socket)
-
-    #start thread for each new client
     thread = threading.Thread(target=handle_client, args=(client_socket,))
     thread.start()
