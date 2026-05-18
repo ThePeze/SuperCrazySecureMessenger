@@ -307,6 +307,11 @@ sudo systemctl restart chat-server chat-web
 
 ## Security notice
 
-This project is intended for **private, low-traffic** use. There is no strong authentication: anyone who knows a username can use it (or take over an active session). Do not store or transmit highly sensitive data. Use HTTPS in production and never commit `.env` to version control.
+This project is intended for **private, low-traffic** use. There is no strong authentication: anyone who knows a username can use it (or take over an active session). Do not store or transmit highly sensitive data.
+
+## Further Development
+I don't plan on continuing this project, so don't expect any updates. However if you want to improve something, be welcome to do that!
 
 **Seriously, don't use it!**
+
+Check out my youtube video detailing the development process if you haven't already: https://youtu.be/kYETJjmP_AA
